@@ -5,5 +5,6 @@ import { ShopifyController } from './shopify.controller';
 @Module({
   controllers: [ShopifyController],
   providers: [ShopifyService],
+  exports: [ShopifyService],
 })
-export class AppModule {}
+export class ShopifyModule {}
