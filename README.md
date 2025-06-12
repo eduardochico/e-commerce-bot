@@ -49,4 +49,4 @@ Example using `curl`:
 curl http://localhost:3000/products
 ```
 
-This will return the JSON payload from Shopify's [Products API](https://shopify.dev/docs/api/admin-rest/2023-10/resources/product). If Shopify credentials are missing or invalid, the API responds with an error message.
+This endpoint returns a simplified JSON payload derived from Shopify's [Products API](https://shopify.dev/docs/api/admin-rest/2024-04/resources/product). Each product object contains the fields `productName`, `productId`, `imageUrl`, `price`, and `vendor`. If Shopify credentials are missing or invalid, the API responds with an error message.
