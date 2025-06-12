@@ -20,6 +20,7 @@ npm install
 - `SHOPIFY_SHOP_DOMAIN` – your Shopify store domain (e.g. `my-shop.myshopify.com`)
 - `SHOPIFY_ACCESS_TOKEN` – a private app access token with permissions to read products
 
+
 You can create a `.env` file or export them in your shell before running the app.
 
 ## Building and running
@@ -32,6 +33,7 @@ npm start
 ```
 
 The application listens on `http://localhost:3000` by default.
+
 
 ## API Usage
 

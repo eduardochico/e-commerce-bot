@@ -1,9 +1,12 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+
 import axios from 'axios';
+
 
 @Injectable()
 export class ShopifyService {
   private readonly shopDomain = process.env.SHOPIFY_SHOP_DOMAIN;
+
   private readonly accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
 
   async getProducts(): Promise<any> {
@@ -26,6 +29,7 @@ export class ShopifyService {
       throw new HttpException(
         error?.response?.data || 'Failed to fetch products',
         error?.response?.status || HttpStatus.BAD_GATEWAY,
+
       );
     }
   }
