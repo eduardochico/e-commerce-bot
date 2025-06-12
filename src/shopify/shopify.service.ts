@@ -1,31 +1,40 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import axios from 'axios';
+import { shopify } from './shopify.app';
+import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api';
+import { restResources } from '@shopify/shopify-api/rest/admin/2023-10';
 
 @Injectable()
 export class ShopifyService {
   private readonly shopDomain = process.env.SHOPIFY_SHOP_DOMAIN;
-  private readonly accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
+
+  private readonly api = shopifyApi({
+    apiKey: process.env.SHOPIFY_API_KEY!,
+    apiSecretKey: process.env.SHOPIFY_API_SECRET!,
+    scopes: ['read_products'],
+    hostName: this.shopDomain!,
+    apiVersion: LATEST_API_VERSION,
+    isEmbeddedApp: false,
+    isCustomStoreApp: true,
+    adminApiAccessToken: process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN!,
+    restResources,
+  });
 
   async getProducts(): Promise<any> {
-    if (!this.shopDomain || !this.accessToken) {
+    if (!this.shopDomain) {
       throw new HttpException(
-        'Shopify credentials are not configured',
+        'Shopify shop domain is not configured',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    const url = `https://${this.shopDomain}/admin/api/2023-10/products.json`;
+    const session = this.api.session.customAppSession(this.shopDomain);
     try {
-      const response = await axios.get(url, {
-        headers: {
-          'X-Shopify-Access-Token': this.accessToken,
-          'Content-Type': 'application/json',
-        },
-      });
-      return response.data;
+      const { Product } = this.api.rest.resources;
+      const response = await Product.all({ session });
+      return response.data.map((p: any) => (typeof p.toJSON === 'function' ? p.toJSON() : p));
     } catch (error: any) {
       throw new HttpException(
-        error?.response?.data || 'Failed to fetch products',
-        error?.response?.status || HttpStatus.BAD_GATEWAY,
+        error?.message || 'Failed to fetch products',
+        HttpStatus.BAD_GATEWAY,
       );
     }
   }
