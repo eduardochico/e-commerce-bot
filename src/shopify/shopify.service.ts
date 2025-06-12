@@ -16,7 +16,7 @@ export class ShopifyService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    const url = `https://${this.shopDomain}/admin/api/2023-10/products.json`;
+    const url = `https://${this.shopDomain}/admin/api/2024-04/products.json`;
     try {
       const response = await axios.get(url, {
         headers: {
@@ -24,7 +24,14 @@ export class ShopifyService {
           'Content-Type': 'application/json',
         },
       });
-      return response.data;
+      const products = response.data?.products ?? [];
+      return products.map((p: any) => ({
+        productName: p.title,
+        productId: p.id,
+        imageUrl: p.image?.src ?? p.images?.[0]?.src ?? null,
+        price: p.variants?.[0]?.price,
+        vendor: p.vendor,
+      }));
     } catch (error: any) {
       throw new HttpException(
         error?.response?.data || 'Failed to fetch products',
