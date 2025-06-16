@@ -39,6 +39,7 @@ export class WhatsappController {
     const twimlRes = new twiml.MessagingResponse();
     const msg = twimlRes.message(reply);
 
+
     const matchedProduct = products.find(
       (p: any) =>
         userMessage.toLowerCase().includes(p.productName.toLowerCase()) ||
@@ -48,6 +49,7 @@ export class WhatsappController {
     if (matchedProduct?.imageUrl) {
       msg.media(matchedProduct.imageUrl);
     }
+
 
     console.log('From:', from);
 
