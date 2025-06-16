@@ -18,20 +18,36 @@ export class WhatsappController {
 
     const products = await this.shopifyService.getProducts();
     const productNames = products.map((p: any) => p.productName).join(', ');
+    const catalogInfo = products
+      .map(
+        (p: any) =>
+          `${p.productName} (id: ${p.productId}, price: ${p.price}, vendor: ${p.vendor}, image: ${p.imageUrl})`,
+      )
+      .join('; ');
 
     const reply = await this.openaiService.chat([
       {
         role: 'system',
         content:
           'You are a helpful e-commerce assistant. ' +
-          'There is an endpoint GET /products that returns available product names. ' +
-          `Current products are: ${productNames}. Use this information when relevant.`,
+          'There is an endpoint GET /products that returns available product details. ' +
+          `Catalog info: ${catalogInfo}. Use this information when relevant.`,
       },
       { role: 'user', content: userMessage },
     ]);
 
     const twimlRes = new twiml.MessagingResponse();
-    twimlRes.message(reply);
+    const msg = twimlRes.message(reply);
+
+    const matchedProduct = products.find(
+      (p: any) =>
+        userMessage.toLowerCase().includes(p.productName.toLowerCase()) ||
+        userMessage.includes(String(p.productId)),
+    );
+
+    if (matchedProduct?.imageUrl) {
+      msg.media(matchedProduct.imageUrl);
+    }
 
     console.log('From:', from);
 
