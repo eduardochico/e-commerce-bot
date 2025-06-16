@@ -90,3 +90,4 @@ POST /whatsapp/webhook
 ```
 
 Configure this URL as your WhatsApp webhook in the Twilio Console.
+If a message contains a product name or ID, the bot attaches that product's image in the reply. The assistant also receives product IDs, prices, vendors, and image URLs so it can answer detailed catalog questions.
