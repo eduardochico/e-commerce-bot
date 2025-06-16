@@ -1,6 +1,7 @@
 import { Body, Controller, Header, Post } from '@nestjs/common';
 import { TwilioService } from './twilio.service';
 import { ShopifyService } from '../shopify/shopify.service';
+import { OpenaiService } from '../openai/openai.service';
 import { twiml } from 'twilio';
 
 @Controller('whatsapp')
@@ -8,32 +9,39 @@ export class WhatsappController {
   constructor(
     private readonly twilioService: TwilioService,
     private readonly shopifyService: ShopifyService,
+    private readonly openaiService: OpenaiService,
   ) {}
 
   @Post('webhook')
   @Header('Content-Type', 'text/xml')
   async handleMessage(@Body() body: any): Promise<string> {
-    const incoming = (body.Body || '').toLowerCase();
     const from = body.From?.replace('whatsapp:', '') || '';
-    if (incoming.includes('product')) {
-      const products = await this.shopifyService.getProducts();
-      const names = products.map((p: any) => p.productName).join(', ');
-      const twimlRes = new twiml.MessagingResponse();
-      twimlRes.message(`Available products: ${names}`);
-      // Also send a message via API in case TwiML not delivered
-      console.log('From:', from);
-      try {
-        await this.twilioService.sendWhatsAppMessage(
-          from,
-          `Available products: ${names}`,
-        );
-      } catch (error) {
-        console.error('Failed to send proactive WhatsApp message', error);
-      }
-      return twimlRes.toString();
-    }
+    const userMessage = body.Body || '';
+
+    const products = await this.shopifyService.getProducts();
+    const productNames = products.map((p: any) => p.productName).join(', ');
+
+    const reply = await this.openaiService.chat([
+      {
+        role: 'system',
+        content:
+          'You are a helpful e-commerce assistant. ' +
+          'There is an endpoint GET /products that returns available product names. ' +
+          `Current products are: ${productNames}. Use this information when relevant.`,
+      },
+      { role: 'user', content: userMessage },
+    ]);
+
     const twimlRes = new twiml.MessagingResponse();
-    twimlRes.message('Send "products" to get a list of products.');
+    twimlRes.message(reply);
+
+    console.log('From:', from);
+    try {
+      await this.twilioService.sendWhatsAppMessage(from, reply);
+    } catch (error) {
+      console.error('Failed to send proactive WhatsApp message', error);
+    }
+
     return twimlRes.toString();
   }
 }
