@@ -14,13 +14,14 @@ export class WhatsappController {
     const from = body.From?.replace('whatsapp:', '') || '';
     const userMessage = body.Body || '';
 
-    const { body: reply, mediaUrl } = await this.whatsappService.processMessage(
-      userMessage,
-    );
+    const { body: reply, mediaUrl, actionUrl } =
+      await this.whatsappService.processMessage(userMessage);
 
     const twimlRes = new twiml.MessagingResponse();
 
-    const msg = twimlRes.message(reply);
+    const msg = actionUrl
+      ? twimlRes.message({ persistentAction: actionUrl } as any, reply)
+      : twimlRes.message(reply);
     if (mediaUrl) {
       msg.media(mediaUrl);
     }
