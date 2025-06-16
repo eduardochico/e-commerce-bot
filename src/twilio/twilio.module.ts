@@ -3,10 +3,11 @@ import { TwilioService } from './twilio.service';
 import { WhatsappController } from './whatsapp.controller';
 import { ShopifyModule } from '../shopify/shopify.module';
 import { OpenaiModule } from '../openai/openai.module';
+import { WhatsappService } from './whatsapp.service';
 
 @Module({
   imports: [ShopifyModule, OpenaiModule],
-  providers: [TwilioService],
+  providers: [TwilioService, WhatsappService],
   controllers: [WhatsappController],
 })
 export class TwilioModule {}

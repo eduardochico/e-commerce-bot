@@ -83,11 +83,14 @@ curl http://localhost:3000/products/<id>/image
 
 ### WhatsApp webhook
 
-Twilio will send incoming WhatsApp messages to the `/whatsapp/webhook` endpoint. If the user sends a message containing the word `"products"`, the bot replies with the list of available product names from Shopify.
+Twilio will send incoming WhatsApp messages to the `/whatsapp/webhook` endpoint.
+The assistant first detects the user's intent and supports the following intents:
+`store-information`, `list-products`, `view-product-detail` and `buy-product`.
+OpenAI is used both for intent detection and for generating the reply.
 
 ```
 POST /whatsapp/webhook
 ```
 
 Configure this URL as your WhatsApp webhook in the Twilio Console.
-If a message contains a product name or ID, the bot attaches that product's image in the reply. The assistant also receives product IDs, prices, vendors, and image URLs so it can answer detailed catalog questions.
+When a product is mentioned, the bot attaches the product image instead of sharing its URL. The assistant receives product IDs, prices, vendors and image URLs so it can answer detailed catalog questions and provide a link to view the product in the store.
