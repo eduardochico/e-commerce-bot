@@ -25,4 +25,31 @@ export class OpenaiService {
     );
     return response.data?.choices?.[0]?.message?.content?.trim() ?? '';
   }
+
+  async matchProduct(
+    userMessage: string,
+    catalog: { productName: string; productId: string | number }[],
+  ): Promise<string | null> {
+    const catalogList = catalog
+      .map((p) => `${p.productName} (id: ${p.productId})`)
+      .join('; ');
+    const messages = [
+      {
+        role: 'system',
+        content:
+          'Identify if the user is referring to a product from the catalog. ' +
+          'Reply ONLY with the id of the product if there is a clear match. ' +
+          'Reply with "none" if no product matches. ' +
+          `Catalog: ${catalogList}.`,
+      },
+      { role: 'user', content: userMessage },
+    ];
+
+    const reply = await this.chat(messages);
+    const id = reply.trim().toLowerCase();
+    if (id === 'none') {
+      return null;
+    }
+    return id;
+  }
 }

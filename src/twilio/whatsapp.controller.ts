@@ -47,11 +47,10 @@ export class WhatsappController {
 
     const twimlRes = new twiml.MessagingResponse();
 
-    const matchedProduct = catalog.find(
-      (p: any) =>
-        userMessage.toLowerCase().includes(p.productName.toLowerCase()) ||
-        userMessage.includes(String(p.productId)),
-    );
+    const matchedId = await this.openaiService.matchProduct(userMessage, catalog);
+    const matchedProduct = matchedId
+      ? catalog.find((p: any) => String(p.productId) === matchedId)
+      : undefined;
 
     let messageBody = reply;
     if (matchedProduct) {
