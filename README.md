@@ -22,6 +22,7 @@ npm install
 - `TWILIO_ACCOUNT_SID` – your Twilio account SID
 - `TWILIO_AUTH_TOKEN` – the auth token for your Twilio account
 - `TWILIO_WHATSAPP_NUMBER` – the Twilio WhatsApp-enabled number to send messages from
+- `OPENAI_API_KEY` – your OpenAI API key for GPT-4 access
 
 
 You can create a `.env` file or export them in your shell before running the app.
