@@ -21,7 +21,14 @@ export class WhatsappController {
       const twimlRes = new twiml.MessagingResponse();
       twimlRes.message(`Available products: ${names}`);
       // Also send a message via API in case TwiML not delivered
-      await this.twilioService.sendWhatsAppMessage(from, `Available products: ${names}`);
+      try {
+        await this.twilioService.sendWhatsAppMessage(
+          from,
+          `Available products: ${names}`,
+        );
+      } catch (error) {
+        console.error('Failed to send proactive WhatsApp message', error);
+      }
       return twimlRes.toString();
     }
     const twimlRes = new twiml.MessagingResponse();
