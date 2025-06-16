@@ -55,6 +55,32 @@ curl http://localhost:3000/products
 
 This endpoint returns a simplified JSON payload derived from Shopify's [Products API](https://shopify.dev/docs/api/admin-rest/2024-04/resources/product). Each product object contains the fields `productName`, `productId`, `imageUrl`, `price`, and `vendor`. If Shopify credentials are missing or invalid, the API responds with an error message.
 
+### Get a single product
+
+```
+GET /products/:id
+```
+
+Retrieve the raw product information for the given product ID directly from Shopify.
+
+Example:
+
+```bash
+curl http://localhost:3000/products/<id>
+```
+
+### Get product image
+
+```
+GET /products/:id/image
+```
+
+Returns a JSON object with the first image URL of the specified product.
+
+```bash
+curl http://localhost:3000/products/<id>/image
+```
+
 ### WhatsApp webhook
 
 Twilio will send incoming WhatsApp messages to the `/whatsapp/webhook` endpoint. If the user sends a message containing the word `"products"`, the bot replies with the list of available product names from Shopify.
