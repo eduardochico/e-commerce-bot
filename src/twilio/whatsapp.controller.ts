@@ -1,5 +1,4 @@
 import { Body, Controller, Header, Post } from '@nestjs/common';
-import { TwilioService } from './twilio.service';
 import { ShopifyService } from '../shopify/shopify.service';
 import { OpenaiService } from '../openai/openai.service';
 import { twiml } from 'twilio';
@@ -7,7 +6,6 @@ import { twiml } from 'twilio';
 @Controller('whatsapp')
 export class WhatsappController {
   constructor(
-    private readonly twilioService: TwilioService,
     private readonly shopifyService: ShopifyService,
     private readonly openaiService: OpenaiService,
   ) {}
@@ -36,11 +34,9 @@ export class WhatsappController {
     twimlRes.message(reply);
 
     console.log('From:', from);
-    try {
-      await this.twilioService.sendWhatsAppMessage(from, reply);
-    } catch (error) {
-      console.error('Failed to send proactive WhatsApp message', error);
-    }
+
+    // Twilio automatically sends the message specified in the TwiML response.
+    // Avoid proactively sending the same message again to prevent duplicates.
 
     return twimlRes.toString();
   }
