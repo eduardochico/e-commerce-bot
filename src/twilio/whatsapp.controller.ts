@@ -21,6 +21,7 @@ export class WhatsappController {
       const twimlRes = new twiml.MessagingResponse();
       twimlRes.message(`Available products: ${names}`);
       // Also send a message via API in case TwiML not delivered
+      console.log('From:', from);
       try {
         await this.twilioService.sendWhatsAppMessage(
           from,
