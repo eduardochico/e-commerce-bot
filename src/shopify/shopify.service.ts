@@ -24,14 +24,7 @@ export class ShopifyService {
           'Content-Type': 'application/json',
         },
       });
-      const products = response.data?.products ?? [];
-      return products.map((p: any) => ({
-        productName: p.title,
-        productId: p.id,
-        imageUrl: p.image?.src ?? p.images?.[0]?.src ?? null,
-        price: p.variants?.[0]?.price,
-        vendor: p.vendor,
-      }));
+      return response.data;
     } catch (error: any) {
       throw new HttpException(
         error?.response?.data || 'Failed to fetch products',

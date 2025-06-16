@@ -16,9 +16,17 @@ export class WhatsappController {
     const from = body.From?.replace('whatsapp:', '') || '';
     const userMessage = body.Body || '';
 
-    const products = await this.shopifyService.getProducts();
-    const productNames = products.map((p: any) => p.productName).join(', ');
-    const catalogInfo = products
+    const raw = await this.shopifyService.getProducts();
+    const products = (raw.products ?? []) as any[];
+    const catalog = products.map((p: any) => ({
+      productName: p.title,
+      productId: p.id,
+      imageUrl: p.image?.src ?? p.images?.[0]?.src ?? null,
+      price: p.variants?.[0]?.price,
+      vendor: p.vendor,
+    }));
+    const productNames = catalog.map((p: any) => p.productName).join(', ');
+    const catalogInfo = catalog
       .map(
         (p: any) =>
           `${p.productName} (id: ${p.productId}, price: ${p.price}, vendor: ${p.vendor}, image: ${p.imageUrl})`,
@@ -40,7 +48,7 @@ export class WhatsappController {
     const msg = twimlRes.message(reply);
 
 
-    const matchedProduct = products.find(
+    const matchedProduct = catalog.find(
       (p: any) =>
         userMessage.toLowerCase().includes(p.productName.toLowerCase()) ||
         userMessage.includes(String(p.productId)),
