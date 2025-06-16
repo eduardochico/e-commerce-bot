@@ -13,6 +13,7 @@ export class TwilioService {
 
   async sendWhatsAppMessage(to: string, body: string) {
     const from = `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`;
+    console.log('Sending WhatsApp from', from, 'to', `whatsapp:${to}`);
     return this.client.messages.create({
       from,
       to: `whatsapp:${to}`,
