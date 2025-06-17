@@ -7,6 +7,7 @@ export interface UserData {
   email?: string;
   productInterests?: string[];
   lastProductId?: string;
+  cart?: Record<string, number>;
 }
 
 @Injectable()
@@ -62,5 +63,27 @@ export class MemoryService implements OnModuleDestroy {
   async getLastProduct(id: string): Promise<string | undefined> {
     const user = await this.getUser(id);
     return user?.lastProductId;
+  }
+
+  async addToCart(id: string, productId: string): Promise<void> {
+    const user = (await this.getUser(id)) || { id, cart: {} } as UserData;
+    if (!user.cart) user.cart = {};
+    user.cart[productId] = (user.cart[productId] || 0) + 1;
+    await this.saveUser(user);
+  }
+
+  async getCart(id: string): Promise<{ productId: string; quantity: number }[]> {
+    const user = await this.getUser(id);
+    const cart = user?.cart ?? {};
+    return Object.entries(cart).map(([productId, quantity]) => ({
+      productId,
+      quantity: Number(quantity),
+    }));
+  }
+
+  async clearCart(id: string): Promise<void> {
+    const user = (await this.getUser(id)) || { id } as UserData;
+    user.cart = {};
+    await this.saveUser(user);
   }
 }
