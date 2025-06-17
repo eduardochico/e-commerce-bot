@@ -1,11 +1,13 @@
 import { Body, Controller, Header, Post } from '@nestjs/common';
 import { WhatsappService } from './whatsapp.service';
+import { TwilioService } from './twilio.service';
 import { twiml } from 'twilio';
 
 @Controller('whatsapp')
 export class WhatsappController {
   constructor(
     private readonly whatsappService: WhatsappService,
+    private readonly twilioService: TwilioService,
   ) {}
 
   @Post('webhook')
@@ -17,21 +19,21 @@ export class WhatsappController {
     const { body: reply, mediaUrl, actionUrl } =
       await this.whatsappService.processMessage(userMessage);
 
-    const twimlRes = new twiml.MessagingResponse();
+    console.log('From:', from);
 
-    const msg = actionUrl
-      ? twimlRes.message({ persistentAction: actionUrl } as any, reply)
-      : twimlRes.message(reply);
+    if (actionUrl) {
+      await this.twilioService.sendWhatsAppMessage(from, reply, {
+        mediaUrl,
+        actionUrl,
+      });
+      // Return empty TwiML so Twilio does not send an additional message
+      return new twiml.MessagingResponse().toString();
+    }
+    const twimlRes = new twiml.MessagingResponse();
+    const msg = twimlRes.message(reply);
     if (mediaUrl) {
       msg.media(mediaUrl);
     }
-
-
-    console.log('From:', from);
-
-    // Twilio automatically sends the message specified in the TwiML response.
-    // Avoid proactively sending the same message again to prevent duplicates.
-
     return twimlRes.toString();
   }
 }

@@ -11,13 +11,27 @@ export class TwilioService {
     this.client = new Twilio(accountSid, authToken);
   }
 
-  async sendWhatsAppMessage(to: string, body: string) {
+  async sendWhatsAppMessage(
+    to: string,
+    body: string,
+    options?: { mediaUrl?: string; actionUrl?: string },
+  ) {
     const from = `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`;
-    console.log('Sending WhatsApp from', from, 'to', `whatsapp:${to}`);
-    return this.client.messages.create({
+    const payload: Record<string, any> = {
       from,
       to: `whatsapp:${to}`,
       body,
-    });
+    };
+
+    if (options?.mediaUrl) {
+      payload.mediaUrl = [options.mediaUrl];
+    }
+
+    if (options?.actionUrl) {
+      payload.persistentAction = [options.actionUrl];
+    }
+
+    console.log('Sending WhatsApp', payload);
+    return this.client.messages.create(payload as any);
   }
 }
