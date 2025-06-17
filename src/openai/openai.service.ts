@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 export interface CatalogItem {
   productName: string;
@@ -15,6 +17,10 @@ export interface CatalogItem {
 export class OpenaiService {
   private readonly apiKey = process.env.OPENAI_API_KEY;
   private readonly apiUrl = 'https://api.openai.com/v1/chat/completions';
+  private readonly baseTemplate: string = readFileSync(
+    join(process.cwd(), 'src/prompt/base_prompt.txt'),
+    'utf8',
+  );
 
   async chat(messages: { role: string; content: string }[]): Promise<string> {
     if (!this.apiKey) {
@@ -158,5 +164,28 @@ export class OpenaiService {
       { role: 'user', content: userMessage },
     ];
     return this.chat(messages);
+  }
+
+  buildBasePrompt(options: {
+    storeName: string;
+    userName?: string;
+    intent: string;
+    userInput: string;
+  }): string {
+    return this.baseTemplate
+      .replace('{{store_name}}', options.storeName)
+      .replace('{{user_name}}', options.userName ?? 'customer')
+      .replace('{{intent}}', options.intent)
+      .replace('{{user_input}}', options.userInput);
+  }
+
+  async chatWithBasePrompt(options: {
+    storeName: string;
+    userName?: string;
+    intent: string;
+    userInput: string;
+  }): Promise<string> {
+    const prompt = this.buildBasePrompt(options);
+    return this.chat([{ role: 'system', content: prompt }]);
   }
 }

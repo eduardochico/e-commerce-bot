@@ -154,13 +154,12 @@ export class WhatsappService {
         break;
       }
       default:
-        body = await this.openaiService.chat([
-          {
-            role: 'system',
-            content: 'You are a helpful e-commerce assistant.',
-          },
-          { role: 'user', content: userMessage },
-        ]);
+        body = await this.openaiService.chatWithBasePrompt({
+          storeName: process.env.SHOPIFY_SHOP_DOMAIN || 'our store',
+          userName: user?.name,
+          intent,
+          userInput: userMessage,
+        });
     }
 
     return { body, mediaUrl, actionUrl };
