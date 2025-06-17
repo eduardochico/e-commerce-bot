@@ -176,6 +176,45 @@ export class WhatsappService {
         }
         break;
       }
+      case 'cart': {
+        const matchedId = await this.openaiService.matchProduct(
+          userMessage,
+          catalog,
+        );
+        const product = matchedId
+          ? catalog.find((p) => String(p.productId) === matchedId)
+          : undefined;
+        if (product) {
+          if (/remove|delete/i.test(userMessage)) {
+            await this.memoryService.removeFromCart(from, String(product.productId));
+          } else if (/update|change|edit/i.test(userMessage)) {
+            const qtyMatch = userMessage.match(/(\d+)/);
+            const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
+            await this.memoryService.updateCartItem(from, String(product.productId), qty);
+          } else if (/add|buy|purchase/i.test(userMessage)) {
+            await this.memoryService.addToCart(from, String(product.productId));
+          }
+        }
+        const cartItems = await this.memoryService.getCart(from);
+        let total = 0;
+        const summary = cartItems
+          .map((item) => {
+            const prod = catalog.find((p) => String(p.productId) === String(item.productId));
+            const price = prod ? Number(prod.price) : 0;
+            total += price * item.quantity;
+            const name = prod ? prod.productName : item.productId;
+            return `${name} x${item.quantity}`;
+          })
+          .join('; ');
+        body = await this.openaiService.generateCartResponse(
+          userMessage,
+          summary || 'no items',
+          String(total),
+          storeName,
+          user?.name,
+        );
+        break;
+      }
       case 'checkout': {
         const cartItems = await this.memoryService.getCart(from);
         if (cartItems.length === 0) {

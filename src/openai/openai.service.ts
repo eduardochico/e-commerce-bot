@@ -40,6 +40,10 @@ export class OpenaiService {
       join(process.cwd(), 'src/prompt/buy_product_prompt.txt'),
       'utf8',
     ),
+    cart: readFileSync(
+      join(process.cwd(), 'src/prompt/cart_prompt.txt'),
+      'utf8',
+    ),
     productNotFound: readFileSync(
       join(process.cwd(), 'src/prompt/product_not_found_prompt.txt'),
       'utf8',
@@ -114,7 +118,7 @@ export class OpenaiService {
       {
         role: 'system',
         content:
-          'Identify the user intent. Possible intents: hello, store-information, list-products, view-product-detail, buy-product, checkout. ' +
+          'Identify the user intent. Possible intents: hello, store-information, list-products, view-product-detail, buy-product, cart, checkout. ' +
           'Reply ONLY with one of the intent labels.',
       },
       { role: 'user', content: userMessage },
@@ -231,6 +235,24 @@ export class OpenaiService {
       store_name: storeName,
       user_name: userName ?? 'customer',
       intent: 'checkout',
+      user_input: userMessage,
+    });
+    return this.chat([{ role: 'system', content: prompt }]);
+  }
+
+  async generateCartResponse(
+    userMessage: string,
+    cartSummary: string,
+    totalPrice: string,
+    storeName: string,
+    userName?: string,
+  ): Promise<string> {
+    const prompt = this.fillTemplate(this.templates.cart, {
+      cart_items: cartSummary,
+      total_price: totalPrice,
+      store_name: storeName,
+      user_name: userName ?? 'customer',
+      intent: 'cart',
       user_input: userMessage,
     });
     return this.chat([{ role: 'system', content: prompt }]);

@@ -72,6 +72,25 @@ export class MemoryService implements OnModuleDestroy {
     await this.saveUser(user);
   }
 
+  async removeFromCart(id: string, productId: string): Promise<void> {
+    const user = await this.getUser(id);
+    if (user?.cart && user.cart[productId]) {
+      delete user.cart[productId];
+      await this.saveUser(user);
+    }
+  }
+
+  async updateCartItem(id: string, productId: string, quantity: number): Promise<void> {
+    const user = (await this.getUser(id)) || { id, cart: {} } as UserData;
+    if (!user.cart) user.cart = {};
+    if (quantity <= 0) {
+      delete user.cart[productId];
+    } else {
+      user.cart[productId] = quantity;
+    }
+    await this.saveUser(user);
+  }
+
   async getCart(id: string): Promise<{ productId: string; quantity: number }[]> {
     const user = await this.getUser(id);
     const cart = user?.cart ?? {};
