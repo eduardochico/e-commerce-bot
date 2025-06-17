@@ -19,9 +19,6 @@ export class WhatsappController {
     const { body: reply, mediaUrl, actionUrl } =
       await this.whatsappService.processMessage(userMessage);
 
-    console.log('From:', from);
-
-
     if (actionUrl) {
       await this.twilioService.sendWhatsAppMessage(from, reply, {
         mediaUrl,

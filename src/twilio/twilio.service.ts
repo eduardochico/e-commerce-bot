@@ -28,7 +28,7 @@ export class TwilioService {
     }
 
     if (options?.actionUrl) {
-      payload.persistentAction = [options.actionUrl];
+      payload.persistentAction = [`${options.actionUrl}|Ver Producto`];
     }
 
     console.log('Sending WhatsApp', payload);
