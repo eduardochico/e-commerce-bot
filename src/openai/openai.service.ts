@@ -248,26 +248,4 @@ export class OpenaiService {
     return this.chat([{ role: 'system', content: prompt }]);
   }
 
-  buildBasePrompt(options: {
-    storeName: string;
-    userName?: string;
-    intent: string;
-    userInput: string;
-  }): string {
-    return this.baseTemplate
-      .replace('{{store_name}}', options.storeName)
-      .replace('{{user_name}}', options.userName ?? 'customer')
-      .replace('{{intent}}', options.intent)
-      .replace('{{user_input}}', options.userInput);
-  }
-
-  async chatWithBasePrompt(options: {
-    storeName: string;
-    userName?: string;
-    intent: string;
-    userInput: string;
-  }): Promise<string> {
-    const prompt = this.buildBasePrompt(options);
-    return this.chat([{ role: 'system', content: prompt }]);
-  }
 }
