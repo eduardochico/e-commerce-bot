@@ -23,6 +23,7 @@ npm install
 - `TWILIO_AUTH_TOKEN` – the auth token for your Twilio account
 - `TWILIO_WHATSAPP_NUMBER` – the Twilio WhatsApp-enabled number to send messages from
 - `OPENAI_API_KEY` – your OpenAI API key for GPT-4 access
+- `REDIS_URL` – connection URL for Redis (defaults to `redis://localhost:6379`)
 
 
 You can create a `.env` file or export them in your shell before running the app.

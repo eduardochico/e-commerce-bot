@@ -68,7 +68,7 @@ export class OpenaiService {
       {
         role: 'system',
         content:
-          'Identify the user intent. Possible intents: store-information, list-products, view-product-detail, buy-product. ' +
+          'Identify the user intent. Possible intents: hello, store-information, list-products, view-product-detail, buy-product. ' +
           'Reply ONLY with one of the intent labels.',
       },
       { role: 'user', content: userMessage },
