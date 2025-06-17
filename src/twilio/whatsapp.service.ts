@@ -23,7 +23,7 @@ export class WhatsappService {
 
   async processMessage(
     userMessage: string,
-  ): Promise<{ body: string; mediaUrl?: string }> {
+  ): Promise<{ body: string; mediaUrl?: string; actionUrl?: string }> {
     const raw = await this.shopifyService.getProducts();
     const catalog = this.buildCatalog(raw.products ?? []);
 
@@ -31,6 +31,7 @@ export class WhatsappService {
 
     let body = '';
     let mediaUrl: string | undefined;
+    let actionUrl: string | undefined;
 
     switch (intent) {
       case 'store-information':
@@ -59,6 +60,10 @@ export class WhatsappService {
           );
           if (product.imageUrl) {
             mediaUrl = product.imageUrl;
+          }
+          const domain = process.env.SHOPIFY_SHOP_DOMAIN;
+          if (domain && product.handle) {
+            actionUrl = `https://${domain}/products/${product.handle}`;
           }
         } else {
           body = await this.openaiService.chat([
@@ -99,7 +104,7 @@ export class WhatsappService {
         ]);
     }
 
-    return { body, mediaUrl };
+    return { body, mediaUrl, actionUrl };
   }
 }
 
