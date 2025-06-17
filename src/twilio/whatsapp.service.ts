@@ -64,7 +64,7 @@ export class WhatsappService {
       case 'hello': {
         if (!user) {
           body =
-            'Hello! Welcome to our store. You can share your name and email if you like.';
+            'Hello! Welcome to our store. Could you tell me your name? You can also share your email if you like.';
           if (emailMatch) {
             await this.memoryService.saveUser({
               id: from,
@@ -72,8 +72,11 @@ export class WhatsappService {
               productInterests: [],
             });
           }
+        } else if (!user.name) {
+          body =
+            'Hi there! I do not have your name yet. What should I call you? You can also share your email if you like.';
         } else {
-          const name = user.name || 'friend';
+          const name = user.name;
           let interestText = '';
           const lastId = user.productInterests?.[user.productInterests.length - 1];
           const product = lastId
