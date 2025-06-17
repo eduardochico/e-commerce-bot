@@ -171,7 +171,42 @@ export class WhatsappService {
         if (product) {
           await this.memoryService.addProductInterest(from, String(product.productId));
           await this.memoryService.setLastProduct(from, String(product.productId));
+          await this.memoryService.addToCart(from, String(product.productId));
         }
+        break;
+      }
+      case 'checkout': {
+        const cartItems = await this.memoryService.getCart(from);
+        if (cartItems.length === 0) {
+          body = await this.openaiService.generateCheckoutResponse(
+            userMessage,
+            'no items',
+            '',
+            storeName,
+            user?.name,
+          );
+          break;
+        }
+        const summary = cartItems
+          .map((item) => {
+            const prod = catalog.find((p) => String(p.productId) === String(item.productId));
+            const name = prod ? prod.productName : item.productId;
+            return `${name} x${item.quantity}`;
+          })
+          .join('; ');
+        const domain = process.env.SHOPIFY_SHOP_DOMAIN;
+        const link = domain
+          ? `https://${domain}/cart/${cartItems
+              .map((i) => `${i.productId}:${i.quantity}`)
+              .join(',')}`
+          : '';
+        body = await this.openaiService.generateCheckoutResponse(
+          userMessage,
+          summary,
+          link,
+          storeName,
+          user?.name,
+        );
         break;
       }
       default:

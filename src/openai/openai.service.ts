@@ -43,6 +43,10 @@ export class OpenaiService {
       join(process.cwd(), 'src/prompt/product_not_found_prompt.txt'),
       'utf8',
     ),
+    checkout: readFileSync(
+      join(process.cwd(), 'src/prompt/checkout_prompt.txt'),
+      'utf8',
+    ),
   } as const;
 
   private fillTemplate(
@@ -109,7 +113,7 @@ export class OpenaiService {
       {
         role: 'system',
         content:
-          'Identify the user intent. Possible intents: hello, store-information, list-products, view-product-detail, buy-product. ' +
+          'Identify the user intent. Possible intents: hello, store-information, list-products, view-product-detail, buy-product, checkout. ' +
           'Reply ONLY with one of the intent labels.',
       },
       { role: 'user', content: userMessage },
@@ -211,6 +215,24 @@ export class OpenaiService {
       storeName,
       userName,
     );
+  }
+
+  async generateCheckoutResponse(
+    userMessage: string,
+    cartSummary: string,
+    checkoutLink: string,
+    storeName: string,
+    userName?: string,
+  ): Promise<string> {
+    const prompt = this.fillTemplate(this.templates.checkout, {
+      cart_items: cartSummary,
+      checkout_link: checkoutLink ? `Checkout link: ${checkoutLink}.` : '',
+      store_name: storeName,
+      user_name: userName ?? 'customer',
+      intent: 'checkout',
+      user_input: userMessage,
+    });
+    return this.chat([{ role: 'system', content: prompt }]);
   }
 
   async generateProductNotFoundResponse(
