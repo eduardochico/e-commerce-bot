@@ -15,6 +15,7 @@ export class WhatsappService {
     return raw.map((p: any) => ({
       productName: p.title,
       productId: p.id,
+      variantId: p.variants?.[0]?.id,
       handle: p.handle,
       imageUrl: p.image?.src ?? p.images?.[0]?.src ?? null,
       price: p.variants?.[0]?.price,
@@ -197,7 +198,13 @@ export class WhatsappService {
         const domain = process.env.SHOPIFY_SHOP_DOMAIN;
         const link = domain
           ? `https://${domain}/cart/${cartItems
-              .map((i) => `${i.productId}:${i.quantity}`)
+              .map((i) => {
+                const prod = catalog.find(
+                  (p) => String(p.productId) === String(i.productId),
+                );
+                const variant = prod?.variantId ?? i.productId;
+                return `${variant}:${i.quantity}`;
+              })
               .join(',')}`
           : '';
         body = await this.openaiService.generateCheckoutResponse(
