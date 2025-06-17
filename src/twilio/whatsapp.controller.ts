@@ -21,6 +21,7 @@ export class WhatsappController {
 
     console.log('From:', from);
 
+
     if (actionUrl) {
       await this.twilioService.sendWhatsAppMessage(from, reply, {
         mediaUrl,
@@ -31,6 +32,7 @@ export class WhatsappController {
     }
     const twimlRes = new twiml.MessagingResponse();
     const msg = twimlRes.message(reply);
+
     if (mediaUrl) {
       msg.media(mediaUrl);
     }
