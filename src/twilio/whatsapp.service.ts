@@ -30,6 +30,8 @@ export class WhatsappService {
     const raw = await this.shopifyService.getProducts();
     const catalog = this.buildCatalog(raw.products ?? []);
 
+    const storeName = process.env.SHOPIFY_SHOP_DOMAIN || 'our store';
+
     const intent = await this.openaiService.analyzeIntent(userMessage);
 
     const emailRegex = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
@@ -92,12 +94,16 @@ export class WhatsappService {
       case 'store-information':
         body = await this.openaiService.generateStoreInformationResponse(
           userMessage,
+          storeName,
+          user?.name,
         );
         break;
       case 'list-products':
         body = await this.openaiService.generateListProductsResponse(
           userMessage,
           catalog,
+          storeName,
+          user?.name,
         );
         break;
       case 'view-product-detail': {
@@ -108,31 +114,31 @@ export class WhatsappService {
         const product = matchedId
           ? catalog.find((p) => String(p.productId) === matchedId)
           : undefined;
-        if (product) {
-          body = await this.openaiService.generateProductDetailResponse(
-            userMessage,
-            product,
-          );
-          if (product.imageUrl) {
-            mediaUrl = product.imageUrl;
+          if (product) {
+            body = await this.openaiService.generateProductDetailResponse(
+              userMessage,
+              product,
+              storeName,
+              user?.name,
+            );
+            if (product.imageUrl) {
+              mediaUrl = product.imageUrl;
+            }
+            await this.memoryService.addProductInterest(from, String(product.productId));
+            const domain = process.env.SHOPIFY_SHOP_DOMAIN;
+            if (domain && product.handle) {
+              actionUrl = `https://${domain}/products/${product.handle}`;
+            }
+          } else {
+            body = await this.openaiService.generateProductNotFoundResponse(
+              userMessage,
+              'view-product-detail',
+              storeName,
+              user?.name,
+            );
           }
-          await this.memoryService.addProductInterest(from, String(product.productId));
-          const domain = process.env.SHOPIFY_SHOP_DOMAIN;
-          if (domain && product.handle) {
-            actionUrl = `https://${domain}/products/${product.handle}`;
-          }
-        } else {
-          body = await this.openaiService.chat([
-            {
-              role: 'system',
-              content:
-                'You are a helpful e-commerce assistant. The requested product was not found.',
-            },
-            { role: 'user', content: userMessage },
-          ]);
+          break;
         }
-        break;
-      }
       case 'buy-product': {
         const matchedId = await this.openaiService.matchProduct(
           userMessage,
@@ -144,6 +150,8 @@ export class WhatsappService {
         body = await this.openaiService.generateBuyProductResponse(
           userMessage,
           product,
+          storeName,
+          user?.name,
         );
         if (product?.imageUrl) {
           mediaUrl = product.imageUrl;

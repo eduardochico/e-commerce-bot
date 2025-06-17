@@ -17,10 +17,45 @@ export interface CatalogItem {
 export class OpenaiService {
   private readonly apiKey = process.env.OPENAI_API_KEY;
   private readonly apiUrl = 'https://api.openai.com/v1/chat/completions';
-  private readonly baseTemplate: string = readFileSync(
-    join(process.cwd(), 'src/prompt/base_prompt.txt'),
-    'utf8',
-  );
+
+  private readonly templates = {
+    base: readFileSync(
+      join(process.cwd(), 'src/prompt/base_prompt.txt'),
+      'utf8',
+    ),
+    storeInfo: readFileSync(
+      join(process.cwd(), 'src/prompt/store_information_prompt.txt'),
+      'utf8',
+    ),
+    listProducts: readFileSync(
+      join(process.cwd(), 'src/prompt/list_products_prompt.txt'),
+      'utf8',
+    ),
+    productDetail: readFileSync(
+      join(process.cwd(), 'src/prompt/product_detail_prompt.txt'),
+      'utf8',
+    ),
+    buyProduct: readFileSync(
+      join(process.cwd(), 'src/prompt/buy_product_prompt.txt'),
+      'utf8',
+    ),
+    productNotFound: readFileSync(
+      join(process.cwd(), 'src/prompt/product_not_found_prompt.txt'),
+      'utf8',
+    ),
+  } as const;
+
+  private fillTemplate(
+    template: string,
+    variables: Record<string, string | undefined>,
+  ): string {
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      result = result.replace(new RegExp(`{{${key}}}`, 'g'), value ?? '');
+    }
+    return result;
+  }
+
 
   async chat(messages: { role: string; content: string }[]): Promise<string> {
     if (!this.apiKey) {
@@ -83,87 +118,134 @@ export class OpenaiService {
     return reply.trim().toLowerCase();
   }
 
-  async generateStoreInformationResponse(userMessage: string): Promise<string> {
+  async generateStoreInformationResponse(
+    userMessage: string,
+    storeName: string,
+    userName?: string,
+  ): Promise<string> {
     const domain = process.env.SHOPIFY_SHOP_DOMAIN || 'our online store';
-    const messages = [
-      {
-        role: 'system',
-        content:
-          `You are a helpful e-commerce assistant for the store at ${domain}. Provide store information and policies without mentioning internal APIs.`,
-      },
-      { role: 'user', content: userMessage },
-    ];
-    return this.chat(messages);
+    const prompt = this.fillTemplate(this.templates.storeInfo, {
+      store_domain: domain,
+      store_name: storeName,
+      user_name: userName ?? 'customer',
+      intent: 'store-information',
+      user_input: userMessage,
+    });
+    return this.chat([{ role: 'system', content: prompt }]);
   }
 
   async generateListProductsResponse(
     userMessage: string,
     catalog: CatalogItem[],
+    storeName: string,
+    userName?: string,
   ): Promise<string> {
     const catalogInfo = catalog
       .map(
         (p) => `${p.productName} (price: ${p.price}, vendor: ${p.vendor})`,
       )
       .join('; ');
-    const messages = [
-      {
-        role: 'system',
-        content:
-          'You are a helpful e-commerce assistant. Provide a concise list of products based on the catalog. ' +
-          `Catalog: ${catalogInfo}.`,
-      },
-      { role: 'user', content: userMessage },
-    ];
-    return this.chat(messages);
+    const prompt = this.fillTemplate(this.templates.listProducts, {
+      catalog_info: catalogInfo,
+      store_name: storeName,
+      user_name: userName ?? 'customer',
+      intent: 'list-products',
+      user_input: userMessage,
+    });
+    return this.chat([{ role: 'system', content: prompt }]);
   }
 
   async generateProductDetailResponse(
     userMessage: string,
     product: CatalogItem,
+    storeName: string,
+    userName?: string,
   ): Promise<string> {
     const domain = process.env.SHOPIFY_SHOP_DOMAIN;
     const link = domain && product.handle ? `https://${domain}/products/${product.handle}` : '';
     const description = product.description
       ? product.description.replace(/<[^>]+>/g, '')
       : '';
-    const messages = [
-      {
-        role: 'system',
-        content:
-          `You are a helpful e-commerce assistant. Provide concise details about the product including the name, price, vendor and brief description. Mention that the product image is attached and do not disclose its URL. ${link ? 'Link: ' + link + '.' : ''} ` +
-          `Product: ${product.productName} (price: ${product.price}, vendor: ${product.vendor}). ${description ? 'Description: ' + description : ''}`,
-      },
-      { role: 'user', content: userMessage },
-    ];
-    return this.chat(messages);
+    const prompt = this.fillTemplate(this.templates.productDetail, {
+      link: link ? `Link: ${link}.` : '',
+      product_name: product.productName,
+      price: String(product.price),
+      vendor: product.vendor ?? '',
+      description: description ? `Description: ${description}` : '',
+      store_name: storeName,
+      user_name: userName ?? 'customer',
+      intent: 'view-product-detail',
+      user_input: userMessage,
+    });
+    return this.chat([{ role: 'system', content: prompt }]);
   }
 
   async generateBuyProductResponse(
     userMessage: string,
-    product?: CatalogItem,
+    product: CatalogItem | undefined,
+    storeName: string,
+    userName?: string,
   ): Promise<string> {
     if (product) {
       const domain = process.env.SHOPIFY_SHOP_DOMAIN;
       const link = domain && product.handle ? `https://${domain}/products/${product.handle}` : '';
-      const messages = [
-        {
-          role: 'system',
-          content:
-            `You are a helpful e-commerce assistant. Help the user purchase the product ${product.productName} (price: ${product.price}, vendor: ${product.vendor}). ${link ? 'Link: ' + link + '.' : ''}`,
-        },
-        { role: 'user', content: userMessage },
-      ];
-      return this.chat(messages);
+      const prompt = this.fillTemplate(this.templates.buyProduct, {
+        product_name: product.productName,
+        price: String(product.price),
+        vendor: product.vendor ?? '',
+        link: link ? `Link: ${link}.` : '',
+        store_name: storeName,
+        user_name: userName ?? 'customer',
+        intent: 'buy-product',
+        user_input: userMessage,
+      });
+      return this.chat([{ role: 'system', content: prompt }]);
     }
-    const messages = [
-      {
-        role: 'system',
-        content:
-          'You are a helpful e-commerce assistant. The requested product was not found.',
-      },
-      { role: 'user', content: userMessage },
-    ];
-    return this.chat(messages);
+    return this.generateProductNotFoundResponse(
+      userMessage,
+      'buy-product',
+      storeName,
+      userName,
+    );
+  }
+
+  async generateProductNotFoundResponse(
+    userMessage: string,
+    intent: string,
+    storeName: string,
+    userName?: string,
+  ): Promise<string> {
+    const prompt = this.fillTemplate(this.templates.productNotFound, {
+      store_name: storeName,
+      user_name: userName ?? 'customer',
+      intent,
+      user_input: userMessage,
+    });
+    return this.chat([{ role: 'system', content: prompt }]);
+  }
+
+  buildBasePrompt(options: {
+    storeName: string;
+    userName?: string;
+    intent: string;
+    userInput: string;
+  }): string {
+    return this.fillTemplate(this.templates.base, {
+      store_name: options.storeName,
+      user_name: options.userName ?? 'customer',
+      intent: options.intent,
+      user_input: options.userInput,
+    });
+  }
+
+  async chatWithBasePrompt(options: {
+    storeName: string;
+    userName?: string;
+    intent: string;
+    userInput: string;
+  }): Promise<string> {
+    const prompt = this.buildBasePrompt(options);
+    return this.chat([{ role: 'system', content: prompt }]);
   }
 
   buildBasePrompt(options: {
