@@ -6,6 +6,7 @@ export interface UserData {
   name?: string;
   email?: string;
   productInterests?: string[];
+  lastProductId?: string;
 }
 
 @Injectable()
@@ -48,6 +49,18 @@ export class MemoryService implements OnModuleDestroy {
     const set = new Set(user.productInterests ?? []);
     set.add(String(productId));
     user.productInterests = Array.from(set);
+    user.lastProductId = String(productId);
     await this.saveUser(user);
+  }
+
+  async setLastProduct(id: string, productId: string): Promise<void> {
+    const user = (await this.getUser(id)) || { id };
+    user.lastProductId = String(productId);
+    await this.saveUser(user);
+  }
+
+  async getLastProduct(id: string): Promise<string | undefined> {
+    const user = await this.getUser(id);
+    return user?.lastProductId;
   }
 }
