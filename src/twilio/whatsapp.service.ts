@@ -152,9 +152,12 @@ export class WhatsappService {
           userMessage,
           catalog,
         );
-        const product = matchedId
+        let product = matchedId
           ? catalog.find((p) => String(p.productId) === matchedId)
           : undefined;
+        if (!product && lastProduct) {
+          product = lastProduct;
+        }
         body = await this.openaiService.generateBuyProductResponse(
           userMessage,
           product,
