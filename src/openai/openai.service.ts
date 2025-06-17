@@ -160,6 +160,7 @@ export class OpenaiService {
     product: CatalogItem,
     storeName: string,
     userName?: string,
+    lastProduct?: string,
   ): Promise<string> {
     const domain = process.env.SHOPIFY_SHOP_DOMAIN;
     const link = domain && product.handle ? `https://${domain}/products/${product.handle}` : '';
@@ -174,6 +175,7 @@ export class OpenaiService {
       description: description ? `Description: ${description}` : '',
       store_name: storeName,
       user_name: userName ?? 'customer',
+      last_product: lastProduct ?? '',
       intent: 'view-product-detail',
       user_input: userMessage,
     });
@@ -185,6 +187,7 @@ export class OpenaiService {
     product: CatalogItem | undefined,
     storeName: string,
     userName?: string,
+    lastProduct?: string,
   ): Promise<string> {
     if (product) {
       const domain = process.env.SHOPIFY_SHOP_DOMAIN;
@@ -196,6 +199,7 @@ export class OpenaiService {
         link: link ? `Link: ${link}.` : '',
         store_name: storeName,
         user_name: userName ?? 'customer',
+        last_product: lastProduct ?? '',
         intent: 'buy-product',
         user_input: userMessage,
       });

@@ -58,6 +58,12 @@ export class WhatsappService {
       await this.memoryService.saveUser(user);
     }
 
+    const lastId = user?.lastProductId;
+    const lastProduct = lastId
+      ? catalog.find((p) => String(p.productId) === lastId)
+      : undefined;
+    const lastProductName = lastProduct?.productName;
+
     let body = '';
     let mediaUrl: string | undefined;
     let actionUrl: string | undefined;
@@ -77,18 +83,18 @@ export class WhatsappService {
         } else if (!user.name) {
           body =
             'Hi there! I do not have your name yet. What should I call you? You can also share your email if you like.';
-        } else {
-          const name = user.name;
-          let interestText = '';
-          const lastId = user.productInterests?.[user.productInterests.length - 1];
-          const product = lastId
-            ? catalog.find((p) => String(p.productId) === lastId)
-            : undefined;
-          if (product) {
-            interestText = ` Are you still interested in ${product.productName}?`;
-          }
-          body = `Welcome back, ${name}!${interestText}`;
+      } else {
+        const name = user.name;
+        let interestText = '';
+        const lastId = user.lastProductId;
+        const product = lastId
+          ? catalog.find((p) => String(p.productId) === lastId)
+          : undefined;
+        if (product) {
+          interestText = ` Are you still interested in ${product.productName}?`;
         }
+        body = `Welcome back, ${name}!${interestText}`;
+      }
         break;
       }
       case 'store-information':
@@ -120,11 +126,13 @@ export class WhatsappService {
               product,
               storeName,
               user?.name,
+              lastProductName,
             );
             if (product.imageUrl) {
               mediaUrl = product.imageUrl;
             }
             await this.memoryService.addProductInterest(from, String(product.productId));
+            await this.memoryService.setLastProduct(from, String(product.productId));
             const domain = process.env.SHOPIFY_SHOP_DOMAIN;
             if (domain && product.handle) {
               actionUrl = `https://${domain}/products/${product.handle}`;
@@ -152,12 +160,14 @@ export class WhatsappService {
           product,
           storeName,
           user?.name,
+          lastProductName,
         );
         if (product?.imageUrl) {
           mediaUrl = product.imageUrl;
         }
         if (product) {
           await this.memoryService.addProductInterest(from, String(product.productId));
+          await this.memoryService.setLastProduct(from, String(product.productId));
         }
         break;
       }
