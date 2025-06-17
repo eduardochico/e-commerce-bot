@@ -6,6 +6,7 @@ import { join } from 'path';
 export interface CatalogItem {
   productName: string;
   productId: string | number;
+  variantId?: string | number;
   handle?: string;
   imageUrl?: string | null;
   price?: string | number;
