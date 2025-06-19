@@ -9,4 +9,4 @@ Inform the user that the product {{product_name}} (price: {{price}}, vendor: {{v
 
 User message: {{user_input}}
 
-Reply in a clear and friendly manner.
+Reply in a clear and friendly manner in {{language}}.

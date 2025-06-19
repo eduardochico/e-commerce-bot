@@ -118,7 +118,7 @@ export class OpenaiService {
       {
         role: 'system',
         content:
-          'Identify the user intent. Possible intents: hello, store-information, list-products, view-product-detail, buy-product, cart, checkout. ' +
+          'Identify the user intent. Possible intents: hello, store-information, list-products, view-product-detail, buy-product, cart, checkout, change-language. ' +
           'Reply ONLY with one of the intent labels.',
       },
       { role: 'user', content: userMessage },
@@ -131,6 +131,7 @@ export class OpenaiService {
     userMessage: string,
     storeName: string,
     userName?: string,
+    language: string = 'English',
   ): Promise<string> {
     const domain = process.env.SHOPIFY_SHOP_DOMAIN || 'our online store';
     const prompt = this.fillTemplate(this.templates.storeInfo, {
@@ -139,6 +140,7 @@ export class OpenaiService {
       user_name: userName ?? 'customer',
       intent: 'store-information',
       user_input: userMessage,
+      language,
     });
     return this.chat([{ role: 'system', content: prompt }]);
   }
@@ -148,6 +150,7 @@ export class OpenaiService {
     catalog: CatalogItem[],
     storeName: string,
     userName?: string,
+    language: string = 'English',
   ): Promise<string> {
     const catalogInfo = catalog
       .map(
@@ -160,6 +163,7 @@ export class OpenaiService {
       user_name: userName ?? 'customer',
       intent: 'list-products',
       user_input: userMessage,
+      language,
     });
     return this.chat([{ role: 'system', content: prompt }]);
   }
@@ -170,6 +174,7 @@ export class OpenaiService {
     storeName: string,
     userName?: string,
     lastProduct?: string,
+    language: string = 'English',
   ): Promise<string> {
     const domain = process.env.SHOPIFY_SHOP_DOMAIN;
     const link = domain && product.handle ? `https://${domain}/products/${product.handle}` : '';
@@ -187,6 +192,7 @@ export class OpenaiService {
       last_product: lastProduct ?? '',
       intent: 'view-product-detail',
       user_input: userMessage,
+      language,
     });
     return this.chat([{ role: 'system', content: prompt }]);
   }
@@ -197,6 +203,7 @@ export class OpenaiService {
     storeName: string,
     userName?: string,
     lastProduct?: string,
+    language: string = 'English',
   ): Promise<string> {
     if (product) {
       const domain = process.env.SHOPIFY_SHOP_DOMAIN;
@@ -211,6 +218,7 @@ export class OpenaiService {
         last_product: lastProduct ?? '',
         intent: 'buy-product',
         user_input: userMessage,
+        language,
       });
       return this.chat([{ role: 'system', content: prompt }]);
     }
@@ -228,6 +236,7 @@ export class OpenaiService {
     checkoutLink: string,
     storeName: string,
     userName?: string,
+    language: string = 'English',
   ): Promise<string> {
     const prompt = this.fillTemplate(this.templates.checkout, {
       cart_items: cartSummary,
@@ -236,6 +245,7 @@ export class OpenaiService {
       user_name: userName ?? 'customer',
       intent: 'checkout',
       user_input: userMessage,
+      language,
     });
     return this.chat([{ role: 'system', content: prompt }]);
   }
@@ -246,6 +256,7 @@ export class OpenaiService {
     totalPrice: string,
     storeName: string,
     userName?: string,
+    language: string = 'English',
   ): Promise<string> {
     const prompt = this.fillTemplate(this.templates.cart, {
       cart_items: cartSummary,
@@ -254,6 +265,7 @@ export class OpenaiService {
       user_name: userName ?? 'customer',
       intent: 'cart',
       user_input: userMessage,
+      language,
     });
     return this.chat([{ role: 'system', content: prompt }]);
   }
@@ -263,12 +275,14 @@ export class OpenaiService {
     intent: string,
     storeName: string,
     userName?: string,
+    language: string = 'English',
   ): Promise<string> {
     const prompt = this.fillTemplate(this.templates.productNotFound, {
       store_name: storeName,
       user_name: userName ?? 'customer',
       intent,
       user_input: userMessage,
+      language,
     });
     return this.chat([{ role: 'system', content: prompt }]);
   }
@@ -278,12 +292,14 @@ export class OpenaiService {
     userName?: string;
     intent: string;
     userInput: string;
+    language?: string;
   }): string {
     return this.fillTemplate(this.templates.base, {
       store_name: options.storeName,
       user_name: options.userName ?? 'customer',
       intent: options.intent,
       user_input: options.userInput,
+      language: options.language ?? 'English',
     });
   }
 
@@ -292,6 +308,7 @@ export class OpenaiService {
     userName?: string;
     intent: string;
     userInput: string;
+    language?: string;
   }): Promise<string> {
     const prompt = this.buildBasePrompt(options);
     return this.chat([{ role: 'system', content: prompt }]);

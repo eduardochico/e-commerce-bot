@@ -5,6 +5,7 @@ export interface UserData {
   id: string;
   name?: string;
   email?: string;
+  language?: string;
   productInterests?: string[];
   lastProductId?: string;
   cart?: Record<string, number>;
@@ -63,6 +64,17 @@ export class MemoryService implements OnModuleDestroy {
   async getLastProduct(id: string): Promise<string | undefined> {
     const user = await this.getUser(id);
     return user?.lastProductId;
+  }
+
+  async setLanguage(id: string, language: string): Promise<void> {
+    const user = (await this.getUser(id)) || { id } as UserData;
+    user.language = language;
+    await this.saveUser(user);
+  }
+
+  async getLanguage(id: string): Promise<string | undefined> {
+    const user = await this.getUser(id);
+    return user?.language;
   }
 
   async addToCart(id: string, productId: string): Promise<void> {

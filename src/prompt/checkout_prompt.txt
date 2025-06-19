@@ -7,4 +7,4 @@ The user's shopping cart contains: {{cart_items}}. {{checkout_link}}
 
 User message: {{user_input}}
 
-Reply in a clear and friendly manner.
+Reply in a clear and friendly manner in {{language}}.

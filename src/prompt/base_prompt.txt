@@ -5,4 +5,4 @@ The user name is {{user_name}} and the intent of the user is: {{intent}}.
 
 User message: {{user_input}}
 
-Reply in a clear and personalized way.
+Reply in a clear and personalized way in {{language}}.
