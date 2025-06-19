@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { franc } from 'franc';
 import { ShopifyService } from '../shopify/shopify.service';
 import { OpenaiService, CatalogItem } from '../openai/openai.service';
 import { MemoryService, UserData } from '../memory/memory.service';
@@ -33,15 +34,22 @@ export class WhatsappService {
 
     const storeName = process.env.SHOPIFY_SHOP_DOMAIN || 'our store';
 
+    const detectedCode = franc(userMessage, { minLength: 3 });
+    const detectedLanguage = detectedCode === 'spa' ? 'Spanish' : 'English';
+
     const intent = await this.openaiService.analyzeIntent(userMessage);
 
     const emailRegex = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
-    const nameRegex = /(my name is|i am) ([^.!]+)/i;
+    const nameRegex = /(my name is|i am|mi nombre es|me llamo|soy) ([^.!]+)/i;
     const emailMatch = userMessage.match(emailRegex);
     const nameMatch = userMessage.match(nameRegex);
 
     let user = await this.memoryService.getUser(from);
-    if (!user && emailMatch) {
+    const isNewUser = !user;
+    if (!user) {
+      user = { id: from, productInterests: [] } as UserData;
+    }
+    if (isNewUser && emailMatch) {
       user = await this.memoryService.findByEmail(emailMatch[0]);
       if (user) {
         user.id = from;
@@ -49,13 +57,16 @@ export class WhatsappService {
       }
     }
     if (emailMatch) {
-      if (!user) user = { id: from, productInterests: [] } as UserData;
       user.email = emailMatch[0];
       await this.memoryService.saveUser(user);
     }
     if (nameMatch) {
-      if (!user) user = { id: from, productInterests: [] } as UserData;
       user.name = nameMatch[2].trim();
+      await this.memoryService.saveUser(user);
+    }
+
+    if (!user.language) {
+      user.language = detectedLanguage;
       await this.memoryService.saveUser(user);
     }
 
@@ -71,31 +82,50 @@ export class WhatsappService {
 
     switch (intent) {
       case 'hello': {
-        if (!user) {
+        user.language = detectedLanguage;
+        await this.memoryService.saveUser(user);
+        if (isNewUser) {
           body =
-            'Hello! Welcome to our store. Could you tell me your name? You can also share your email if you like.';
-          if (emailMatch) {
-            await this.memoryService.saveUser({
-              id: from,
-              email: emailMatch[0],
-              productInterests: [],
-            });
-          }
+            detectedLanguage === 'Spanish'
+              ? '¡Hola! Bienvenido a nuestra tienda. ¿Cuál es tu nombre? También puedes compartir tu correo electrónico si quieres.'
+              : 'Hello! Welcome to our store. Could you tell me your name? You can also share your email if you like.';
         } else if (!user.name) {
           body =
-            'Hi there! I do not have your name yet. What should I call you? You can also share your email if you like.';
-      } else {
-        const name = user.name;
-        let interestText = '';
-        const lastId = user.lastProductId;
-        const product = lastId
-          ? catalog.find((p) => String(p.productId) === lastId)
-          : undefined;
-        if (product) {
-          interestText = ` Are you still interested in ${product.productName}?`;
+            user.language === 'Spanish'
+              ? '¡Hola! Aún no sé tu nombre. ¿Cómo debo llamarte? También puedes compartir tu correo electrónico si quieres.'
+              : 'Hi there! I do not have your name yet. What should I call you? You can also share your email if you like.';
+        } else {
+          const name = user.name;
+          let interestText = '';
+          const lastId = user.lastProductId;
+          const product = lastId
+            ? catalog.find((p) => String(p.productId) === lastId)
+            : undefined;
+          if (product) {
+            interestText =
+              user.language === 'Spanish'
+                ? ` ¿Sigues interesado en ${product.productName}?`
+                : ` Are you still interested in ${product.productName}?`;
+          }
+          body =
+            user.language === 'Spanish'
+              ? `¡Bienvenido de nuevo, ${name}!${interestText}`
+              : `Welcome back, ${name}!${interestText}`;
         }
-        body = `Welcome back, ${name}!${interestText}`;
+        break;
       }
+      case 'change-language': {
+        let newLang = /spanish|espa\u00f1ol/i.test(userMessage)
+          ? 'Spanish'
+          : /english|ingl\u00e9s/i.test(userMessage)
+          ? 'English'
+          : detectedLanguage;
+        user.language = newLang;
+        await this.memoryService.saveUser(user);
+        body =
+          newLang === 'Spanish'
+            ? 'Idioma actualizado a Espa\u00f1ol.'
+            : 'Language updated to English.';
         break;
       }
       case 'store-information':
@@ -103,6 +133,7 @@ export class WhatsappService {
           userMessage,
           storeName,
           user?.name,
+          user.language ?? detectedLanguage,
         );
         break;
       case 'list-products':
@@ -111,6 +142,7 @@ export class WhatsappService {
           catalog,
           storeName,
           user?.name,
+          user.language ?? detectedLanguage,
         );
         break;
       case 'view-product-detail': {
@@ -128,6 +160,7 @@ export class WhatsappService {
               storeName,
               user?.name,
               lastProductName,
+              user.language ?? detectedLanguage,
             );
             if (product.imageUrl) {
               mediaUrl = product.imageUrl;
@@ -144,6 +177,7 @@ export class WhatsappService {
               'view-product-detail',
               storeName,
               user?.name,
+              user.language ?? detectedLanguage,
             );
           }
           break;
@@ -165,6 +199,7 @@ export class WhatsappService {
           storeName,
           user?.name,
           lastProductName,
+          user.language ?? detectedLanguage,
         );
         if (product?.imageUrl) {
           mediaUrl = product.imageUrl;
@@ -212,6 +247,7 @@ export class WhatsappService {
           String(total),
           storeName,
           user?.name,
+          user.language ?? detectedLanguage,
         );
         break;
       }
@@ -224,6 +260,7 @@ export class WhatsappService {
             '',
             storeName,
             user?.name,
+            user.language ?? detectedLanguage,
           );
           break;
         }
@@ -252,6 +289,7 @@ export class WhatsappService {
           link,
           storeName,
           user?.name,
+          user.language ?? detectedLanguage,
         );
         break;
       }
@@ -261,6 +299,7 @@ export class WhatsappService {
           userName: user?.name,
           intent,
           userInput: userMessage,
+          language: user.language ?? detectedLanguage,
         });
     }
 

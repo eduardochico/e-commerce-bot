@@ -11,4 +11,4 @@ Product: {{product_name}} (price: {{price}}, vendor: {{vendor}}). {{description}
 
 User message: {{user_input}}
 
-Reply in a clear and friendly manner.
+Reply in a clear and friendly manner in {{language}}.

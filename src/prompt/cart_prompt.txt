@@ -7,4 +7,4 @@ The shopping cart contains: {{cart_items}}. Total price: {{total_price}}.
 
 User message: {{user_input}}
 
-Reply in a clear and friendly manner.
+Reply in a clear and friendly manner in {{language}}.

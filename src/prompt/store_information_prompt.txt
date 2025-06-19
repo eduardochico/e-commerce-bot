@@ -7,4 +7,4 @@ Provide store information and policies for the store at {{store_domain}} without
 
 User message: {{user_input}}
 
-Reply in a clear and friendly manner.
+Reply in a clear and friendly manner in {{language}}.
